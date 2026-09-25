@@ -76,6 +76,39 @@ def _billing_dep_key(deps: dict) -> Optional[str]:
     return None
 
 
+def _billing_aliases_from_catalog(repo_root: Optional[str]) -> set:
+    """Return the set of lowercased catalog alias keys (dot→dash normalized) that
+    belong to the com.android.billingclient group.
+
+    Reads the TOML directly to extract group entries that gradle_reader does not
+    expose as group:artifact keys.
+    """
+    if not repo_root:
+        return set()
+    toml_path = os.path.join(repo_root, "gradle", "libs.versions.toml")
+    if not os.path.isfile(toml_path):
+        return set()
+    aliases: set = set()
+    try:
+        with open(toml_path, "r", encoding="utf-8", errors="replace") as fh:
+            in_libraries = False
+            for line in fh:
+                stripped = line.strip()
+                if stripped.startswith("[") and stripped.endswith("]"):
+                    section = stripped[1:-1].strip()
+                    in_libraries = (section == "libraries")
+                    continue
+                if not in_libraries or "=" not in stripped:
+                    continue
+                alias_raw, _, rest = stripped.partition("=")
+                alias = alias_raw.strip().strip('"').replace(".", "-").replace("_", "-").lower()
+                if "billingclient" in rest.lower():
+                    aliases.add(alias)
+    except OSError:
+        pass
+    return aliases
+
+
 # ---------------------------------------------------------------------------
 # GP-BILL-01
 # ---------------------------------------------------------------------------
@@ -99,6 +132,12 @@ class GpBill01(Rule):
             gradle = gradle_reader.read(mod.root, mod.build_gradle, ctx.repo_root)
             rel_build = os.path.relpath(mod.build_gradle, ctx.repo_root)
 
+            # Build a set of catalog alias keys that resolve to billing group/artifact.
+            # This covers cases like: implementation(libs.billing.lib) where the alias
+            # is "billing-lib" (after dot→dash normalization) and the TOML entry says
+            # group = "com.android.billingclient".
+            billing_catalog_aliases = _billing_aliases_from_catalog(ctx.repo_root)
+
             # Search dependencies for billing entries
             for dep_key, dep_val in gradle.dependencies.items():
                 lower_key = dep_key.lower()
@@ -108,6 +147,7 @@ class GpBill01(Rule):
                     or (lower_key in ("billing", "billing-ktx", "android-billing"))
                     or lower_key.endswith(":billing")
                     or lower_key.endswith(":billing-ktx")
+                    or lower_key in billing_catalog_aliases
                 )
                 if not is_billing:
                     continue

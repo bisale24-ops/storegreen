@@ -29,7 +29,7 @@ def _make_repo(tmp: str, name: str = "app") -> str:
             android {
                 defaultConfig {
                     applicationId "com.example.app"
-                    targetSdk 34
+                    targetSdk 36
                     versionCode 1
                 }
             }
@@ -39,7 +39,7 @@ def _make_repo(tmp: str, name: str = "app") -> str:
             <?xml version="1.0" encoding="utf-8"?>
             <manifest xmlns:android="http://schemas.android.com/apk/res/android"
                 package="com.example.app">
-                <uses-sdk android:targetSdkVersion="34" />
+                <uses-sdk android:targetSdkVersion="36" />
                 <application />
             </manifest>
         """))

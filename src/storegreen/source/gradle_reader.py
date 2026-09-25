@@ -199,6 +199,7 @@ def _resolve_value(
     catalog: Dict[str, Tuple[str, int]],
     rule_id: str = "?",
     already_unquoted: bool = False,
+    catalog_path: Optional[str] = None,
 ) -> Union[ResolvedValue, Undecided]:
     """Attempt to resolve a raw gradle value to a concrete string.
 
@@ -237,7 +238,9 @@ def _resolve_value(
                     reason=f"version catalog alias {alias!r} references an unresolvable value",
                     evidence=Evidence(file=source_file, line=lineno, found=raw, expected="a literal value"),
                 )
-            return ResolvedValue(value=v, source_file=source_file, source_line=vline)
+            # Evidence points at the toml catalog file where the value is defined
+            resolved_file = catalog_path if catalog_path else source_file
+            return ResolvedValue(value=v, source_file=resolved_file, source_line=vline)
 
     # ext.foo reference
     ext_m = re.match(r'(?:ext\.)?(\w+)', raw)
@@ -284,8 +287,10 @@ def read(module_root: str, build_gradle: str, repo_root: Optional[str] = None) -
     # 1. Load version catalog
     # ------------------------------------------------------------------
     catalog: Dict[str, Tuple[str, int]] = {}
-    catalog_path = os.path.join(repo_root, "gradle", "libs.versions.toml")
-    if os.path.isfile(catalog_path):
+    catalog_path_candidate = os.path.join(repo_root, "gradle", "libs.versions.toml")
+    catalog_path: Optional[str] = None
+    if os.path.isfile(catalog_path_candidate):
+        catalog_path = catalog_path_candidate
         catalog = _parse_versions_toml(catalog_path)
 
     # ------------------------------------------------------------------
@@ -342,6 +347,7 @@ def read(module_root: str, build_gradle: str, repo_root: Optional[str] = None) -
                 resolved = _resolve_value(
                     raw, li, build_gradle, ext_map, catalog,
                     rule_id=prop_key, already_unquoted=already_unquoted,
+                    catalog_path=catalog_path if catalog else None,
                 )
                 setattr(cfg, prop_key, resolved)
                 break
@@ -359,7 +365,7 @@ def read(module_root: str, build_gradle: str, repo_root: Optional[str] = None) -
                 v, vline = catalog[alias]
                 if v != "__unresolved__":
                     cfg.dependencies[alias] = ResolvedValue(
-                        value=v, source_file=build_gradle, source_line=vline
+                        value=v, source_file=catalog_path or build_gradle, source_line=vline
                     )
                 else:
                     cfg.dependencies[alias] = Undecided(
@@ -382,6 +388,7 @@ def read(module_root: str, build_gradle: str, repo_root: Optional[str] = None) -
                 resolved = _resolve_value(
                     version_raw, li, build_gradle, ext_map, catalog,
                     rule_id="dep", already_unquoted=True,
+                    catalog_path=catalog_path if catalog else None,
                 )
                 cfg.dependencies[group_artifact] = resolved
             elif len(parts) == 2:
