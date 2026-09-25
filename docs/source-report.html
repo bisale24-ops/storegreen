@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StoreGreen report</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size:15px; line-height:1.6; color:#1f2328; background:#fff; max-width:820px; margin:40px auto; padding:0 24px; }
+  h1 { font-size:22px; margin-bottom:4px; }
+  .scorecard { background:#f7f8fa; border:1px solid #e5e7eb; border-radius:6px; padding:20px 24px; margin-bottom:24px; }
+  .verdict { font-size:20px; font-weight:700; color:#b91c1c; margin-bottom:12px; }
+  .counts { display:flex; gap:20px; flex-wrap:wrap; font-size:14px; }
+  .count-item { display:flex; flex-direction:column; align-items:center; }
+  .count-num { font-size:28px; font-weight:700; line-height:1; }
+  .count-label { color:#57606a; font-size:12px; }
+  .meta { font-size:13px; color:#57606a; margin-top:12px; }
+  h2 { font-size:17px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<h1>StoreGreen <span style="font-weight:400; color:#57606a; font-size:16px;">v0.1.0</span></h1>
+
+<div class="scorecard">
+  <div class="verdict">✗ 1 BLOCK — store will reject</div>
+  <div class="counts">
+    <div class="count-item"><span class="count-num" style="color:#b91c1c;">1</span><span class="count-label">BLOCK</span></div>
+    <div class="count-item"><span class="count-num" style="color:#b45309;">0</span><span class="count-label">RISK</span></div>
+    <div class="count-item"><span class="count-num" style="color:#1d4ed8;">0</span><span class="count-label">WARN</span></div>
+    <div class="count-item"><span class="count-num" style="color:#6b7280;">3</span><span class="count-label">undecidable</span></div>
+    <div class="count-item"><span class="count-num" style="color:#15803d;">3</span><span class="count-label">passed</span></div>
+  </div>
+  <div class="meta">
+    modules: app · form factor: phone · 0.004s<br>
+    repo: /tmp/demo/tipjar-amazon<br>
+    aab: —
+  </div>
+</div>
+
+<h2 style='margin-top:24px;'>Findings</h2>
+<div class="finding" style="border-left:4px solid #b91c1c; background:#fee2e2; padding:12px 16px; margin-bottom:12px; border-radius:4px;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+    <span class="sev" style="background:#b91c1c; color:#fff; padding:2px 8px; border-radius:3px; font-size:12px; font-weight:700;">BLOCK</span>
+    <span class="rule-id" style="font-family:monospace; font-weight:700;">AMZ-IAP-06</span>
+    <span class="from">decided from: source</span>
+  </div>
+  <div class="title" style="font-weight:600; margin-bottom:6px;">R8 keep rules incomplete — missing: -keep class com.amazon.** { *; }, -dontwarn com.amazon.**, -keepattributes *Annotation*</div>
+  <div class="evidence" style="font-family:monospace; font-size:13px; color:#374151;">
+    <div><strong>at:</strong> app/proguard-rules.pro:1</div>
+    <div><strong>found:</strong> missing: -keep class com.amazon.** { *; }; -dontwarn com.amazon.**; -keepattributes *Annotation*</div>
+    <div><strong>expected:</strong> -keep class com.amazon.** { *; }  -dontwarn com.amazon.**  -keepattributes *Annotation*</div>
+  </div>
+  <div class="fix"><span class="fix-badge">✎ manual</span> Add to your proguard-rules.pro:
+-keep class com.amazon.** { *; }
+-dontwarn com.amazon.**
+-keepattributes *Annotation*</div>
+</div>
+<h2 style='margin-top:24px;'>Undecided (3)</h2>
+<div class="undecided" style="border-left:4px solid #6b7280; background:#f9fafb; padding:10px 16px; margin-bottom:8px; border-radius:4px;">
+  <span style="font-family:monospace; font-weight:700;">AMZ-IAP-03</span>
+  <span style="color:#6b7280;"> · </span>com.amazon.device.iap.ResponseReceiver not found in source manifests — a dependency AAR may still contribute it; re-run with --aab
+  <div style="font-size:12px; color:#6b7280; margin-top:2px;">gave up at app/src/main/AndroidManifest.xml:1</div>
+</div>
+<div class="undecided" style="border-left:4px solid #6b7280; background:#f9fafb; padding:10px 16px; margin-bottom:8px; border-radius:4px;">
+  <span style="font-family:monospace; font-weight:700;">AMZ-IAP-04</span>
+  <span style="color:#6b7280;"> · </span>com.amazon.venezia not found in source manifests — a dependency AAR may still contribute it; re-run with --aab
+  <div style="font-size:12px; color:#6b7280; margin-top:2px;">gave up at app/src/main/AndroidManifest.xml:1</div>
+</div>
+<div class="undecided" style="border-left:4px solid #6b7280; background:#f9fafb; padding:10px 16px; margin-bottom:8px; border-radius:4px;">
+  <span style="font-family:monospace; font-weight:700;">AMZ-IAP-01</span>
+  <span style="color:#6b7280;"> · </span>AppstoreAuthenticationKey.pem not found in source tree — the key is a secret and does not belong in a public repository; verify it is injected at build time before uploading
+  <div style="font-size:12px; color:#6b7280; margin-top:2px;">gave up at app/build.gradle:1</div>
+</div>
+
+<details style="margin-top:24px;">
+  <summary style="cursor:pointer; font-weight:600; font-size:15px;">3 rules passed</summary>
+  <div style="padding:12px 0;"><div style="padding:4px 0; font-size:13px;"><span style="font-family:monospace;">SMOKE-01</span> — repo root is a readable directory: /tmp/demo/tipjar-amazon</div><div style="padding:4px 0; font-size:13px;"><span style="font-family:monospace;">GP-API-01</span> — targetSdk 36 ≥ 36 (form factor: phone (assumed — no form-factor feature found))</div><div style="padding:4px 0; font-size:13px;"><span style="font-family:monospace;">X-FLAVOR-01</span> — Play Billing correctly scoped to play flavor; Amazon IAP in amazon flavor</div></div>
+</details>
+<p style="color:#6b7280; font-size:13px; margin-top:16px;"><strong>Not applicable (2):</strong> GP-BILL-01, GP-16KB-01</p>
+<p style="color:#6b7280; font-size:13px; margin-top:8px;"><strong>Not implemented (13):</strong> AMZ-IAP-02, AMZ-IAP-05, AMZ-IAP-07, AMZ-IAP-08, GP-API-02, GP-BILL-02, GP-PERM-01, GP-PERM-02, GP-PRIV-01, GP-DS-01, GP-EXP-01, X-SIGN-01, X-VER-01</p>
+
+<hr style="border:none; border-top:1px solid #e5e7eb; margin-top:40px;">
+<p style="text-align:center; font-size:12px; color:#57606a;">StoreGreen v0.1.0 · MIT licence</p>
+</body>
+</html>

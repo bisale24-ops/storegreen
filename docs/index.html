@@ -1,0 +1,55 @@
+<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width, initial-scale=1">
+<title>StoreGreen — reports</title><style>
+ :root{--bg:#fbfaf7;--ink:#1a1a18;--dim:#6b6a64;--line:#e2e0d8;--warn:#8a5a12;--ok:#2f6f45;}
+ @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+   --bg:#16160f;--ink:#ecebe3;--dim:#9b9a90;--line:#2e2d25;--warn:#e0b063;--ok:#7fc79a;}}
+ body{background:var(--bg);color:var(--ink);margin:0;padding:48px 16px;
+   font:16px/1.65 system-ui,-apple-system,sans-serif;}
+ main{max-width:760px;margin:0 auto;}
+ h1{font-size:32px;margin:0 0 6px;letter-spacing:-.02em;}
+ .sub{color:var(--dim);margin:0 0 32px;font-size:18px;}
+ a.card{display:block;border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+   margin:14px 0;text-decoration:none;color:inherit;}
+ a.card:hover{border-color:var(--dim);}
+ .t{font-weight:600;font-size:18px;margin-bottom:3px;}
+ .d{color:var(--dim);font-size:15px;}
+ .v{font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-top:8px;}
+ .block{color:var(--warn);font-weight:600;} .ok{color:var(--ok);font-weight:600;}
+ footer{color:var(--dim);font-size:14px;margin-top:36px;border-top:1px solid var(--line);padding-top:18px;}
+ code{font-family:ui-monospace,Menlo,monospace;font-size:14px;}
+</style></head><main>
+<h1>StoreGreen</h1>
+<p class=sub>Know why the store will reject your Android build — before the store does.
+These are real reports, produced by the tool, opened offline. No page here makes a network request.</p>
+
+<a class=card href="bundle-report.html">
+  <div class=t>A bundle that would be rejected</div>
+  <div class=d>The demo bundle, missing the Amazon purchase key and the receiver — the same shape as the
+  rejection that started this project.</div>
+  <div class="v block">3 BLOCK · 1 WARN · 0 undecidable · 2 passed</div>
+</a>
+
+<a class=card href="shipping-app-report.html">
+  <div class=t>An app that is on sale today</div>
+  <div class=d>One of my own published bundles. It passes every Amazon rule — and carries a native
+  library that is not aligned for 16 KB pages, so it cannot be updated on Play after 1 February 2027.
+  I did not know that before writing this.</div>
+  <div class="v block">0 BLOCK · 1 WARN · 5 passed</div>
+</a>
+
+<a class=card href="source-report.html">
+  <div class=t>The same project, read from source</div>
+  <div class=d>Before a bundle exists. Notice what it <em>refuses</em> to decide: the purchase key is a
+  secret that does not belong in a repository, and the receiver may still arrive from a dependency.
+  It says so, and names the line it gave up on, rather than guessing either way.</div>
+  <div class="v">1 BLOCK · <span class=ok>3 undecidable, with reasons</span> · 3 passed</div>
+</a>
+
+<footer>
+Source, tests and the IBM Bob session summaries:
+<a href="https://github.com/bisale24-ops/storegreen">github.com/bisale24-ops/storegreen</a><br>
+Run it yourself with no install: <code>git clone … &amp;&amp; ./run.sh --repo path/to/project</code><br>
+MIT licensed · built with IBM Bob 2.0 during the IBM Bob 2.0 Hackathon, 25–27 September 2026.
+</footer>
+</main></html>

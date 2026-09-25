@@ -1,0 +1,26 @@
+── diff (applied by --fix) ──
+--- a/app/proguard-rules.pro
++++ b/app/proguard-rules.pro
+@@ -4,3 +4,8 @@
+ # -keepattributes *Annotation*) are absent.
+ -keep class com.amazon.device.iap.** { *; }
+ -keep class com.example.tipjar.** { *; }
++
++# Added by storegreen --fix (AMZ-IAP-06)
++-keep class com.amazon.** { *; }
++-dontwarn com.amazon.**
++-keepattributes *Annotation*
+
+StoreGreen v0.1.0  modules: app  form_factor: phone  0.003s
+✓ no BLOCKs  0 RISK  0 WARN  3 undecidable  4 passed
+21 rules  ·  8 implemented  ·  4 decided  ·  3 undecidable  ·  2 not applicable  ·  13 not implemented
+
+── UNDECIDED (3) ──
+  AMZ-IAP-03 · com.amazon.device.iap.ResponseReceiver not found in source manifests — a dependency AAR may still contribute it; re-run with --aab
+    gave up at app/src/main/AndroidManifest.xml:1
+  AMZ-IAP-01 · AppstoreAuthenticationKey.pem not found in source tree — the key is a secret and does not belong in a public repository; verify it is injected at build time before uploading
+    gave up at app/build.gradle:1
+  AMZ-IAP-04 · com.amazon.venezia not found in source manifests — a dependency AAR may still contribute it; re-run with --aab
+    gave up at app/src/main/AndroidManifest.xml:1
+
+── PASSED (4) ──

@@ -15,8 +15,7 @@ VOICE = "en-US-AndrewNeural"
 SCENES = [
     ("card:problem",
      "Eleven September. Amazon rejects our Android app: in-app purchase displays an error. On the "
-     "test phone everything worked. Submitted Thursday, live Sunday — two days and two extra "
-     "builds, for one missing file."),
+     "test phone everything worked. Two days and two extra builds, for one missing file."),
 
     ("clip:scan",
      "StoreGreen reads an Android project the way a store reviewer would, before you upload. It "
@@ -26,21 +25,22 @@ SCENES = [
      "trust."),
 
     ("clip:report",
-     "The report is one offline page with no network in it at all. Findings first, then the checks "
-     "that could not be decided and why, then what passed. That last part matters: a report that "
-     "only lists problems cannot be told apart from one that failed to run."),
+     "The report is one offline page with no network in it at all. Findings first, then what could "
+     "not be decided and why, then what passed. That last part matters: a report that only lists "
+     "problems cannot be told apart from one that failed to run."),
 
     ("clip:bundles",
      "And it reads what actually shipped. Four of our own bundles, on sale today. Fifteen native "
      "libraries, and one is not aligned for sixteen kilobyte pages, so that app cannot be updated "
      "on Play after February. In another, Google Play's billing library is riding inside an Amazon "
-     "build. We did not know either of those."),
+     "build — the permission in the manifest and the classes in the dex file. We did not know "
+     "either of those."),
 
     ("clip:fix",
      "Then Bob fixes what is deterministic. The purchase receiver, the queries entry, the keep "
      "rules that stop R eight stripping the SDK. It shows the diff, re-runs the scan, and the "
-     "verdict turns green. What it will not do is guess. The purchase key it cannot invent, so it "
-     "prints the exact console path to download it and leaves that one open."),
+     "verdict turns green. What it will not do is guess: the purchase key it cannot invent, so it "
+     "prints the console path to download it and leaves that one open."),
 
     ("clip:rejection",
      "Already rejected? Paste the store's e-mail. Bob reads it and points at the rule and the line "
@@ -49,14 +49,19 @@ SCENES = [
 
     ("card:refuses",
      "What it refuses to say matters as much. A watch app at target thirty-five is correct, not a "
-     "violation. A purchase key missing from a public repository is a secret kept properly. And "
-     "when it cannot decide, it counts that too, naming the line it gave up on. A tool that cannot "
-     "say I do not know will eventually say something false."),
+     "violation. A key missing from a public repository is a secret kept properly. And when it "
+     "cannot decide it counts that too, naming the line it gave up on. A tool that cannot say I do "
+     "not know will eventually say something false."),
 
     ("clip:bob",
      "All of it was built inside I B M Bob two point zero. It reviewed the specification before "
-     "writing anything and found three contradictions I had left in it, then built the rule "
-     "families across parallel subagents."),
+     "writing anything and found three contradictions I had left in it, then built the rules and "
+     "the fixer — and caught one of its own rules matching a keep line inside a comment."),
+
+    ("card:numbers",
+     "And the part that is not a demo. Eighty-three public Android repositories, sixty-nine "
+     "blocking findings across forty-five of them, not one crash. A hundred and eighty-three tests, "
+     "and thirty-five malformed inputs that have to be survived rather than passed."),
 
     ("card:end",
      "StoreGreen. Green before you submit. M I T licensed, and the narration in this video is "
@@ -64,6 +69,15 @@ SCENES = [
 ]
 
 CARDS = {
+    "numbers": """<h1>What was actually run</h1>
+    <table>
+      <tr><td>83 public repositories</td><td class=d>found by searching GitHub, not chosen by us</td></tr>
+      <tr><td class=no>69 BLOCK findings in 45 of them</td><td class=d>the Play deadline passed on 31 August</td></tr>
+      <tr><td>29 undecidable</td><td class=d>said so, with the line it gave up on</td></tr>
+      <tr><td class=ok>0 crashes</td><td class=d>a crash is our defect, not their finding</td></tr>
+      <tr><td>183 tests · 3.9 and 3.13</td><td class=d>35 malformed inputs survived, not passed</td></tr>
+    </table>""",
+
     "problem": """<h1>Rejected for one missing file</h1>
     <p class=sub>CrewSheet 1.0.0, Amazon Appstore, content policy</p>
     <table>

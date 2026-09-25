@@ -1,0 +1,33 @@
+--- lockly-amazon-v3.aab ---
+StoreGreen v0.1.0  modules: —  form_factor: phone  0.039s
+✓ no BLOCKs  0 RISK  0 WARN  0 undecidable  6 passed
+21 rules  ·  8 implemented  ·  6 decided  ·  0 undecidable  ·  3 not applicable  ·  13 not implemented
+
+── PASSED (6) ──
+  AMZ-IAP-03, AMZ-IAP-01, X-FLAVOR-01, GP-16KB-01, SMOKE-01, AMZ-IAP-04
+
+── NOT APPLICABLE (3) ──
+  GP-API-01, GP-BILL-01, AMZ-IAP-06
+
+--- numsly-amazon-v7.aab ---
+StoreGreen v0.1.0  modules: —  form_factor: phone  0.076s
+✓ no BLOCKs  0 RISK  1 WARN  0 undecidable  5 passed
+21 rules  ·  8 implemented  ·  6 decided  ·  0 undecidable  ·  3 not applicable  ·  13 not implemented
+
+  WARN  GP-16KB-01  libsqlcipher.so PT_LOAD alignment 0x1000 < 0x4000; 16 KB page support missing (BLOCK from 01.02.2027)
+         at: base/lib/arm64-v8a/libsqlcipher.so
+      found: min p_align = 0x1000; failing: base/lib/arm64-v8a/libsqlcipher.so (min p_align=0x1000); base/lib/x86_64/libsqlcipher.so (min p_align=0x1000)
+   expected: every PT_LOAD p_align ≥ 0x4000 (16 KB)
+        fix: [manual] Rebuild native libraries with AGP 8.5.1+ and NDK r28+. Third-party native dependencies (e.g. SQLCipher) must also be rebuilt — a prebuilt .so cannot be patched post-build.
+
+--- scanly-amazon-v5.aab ---
+StoreGreen v0.1.0  modules: —  form_factor: phone  0.083s
+✓ no BLOCKs  1 RISK  0 WARN  0 undecidable  5 passed
+21 rules  ·  8 implemented  ·  6 decided  ·  0 undecidable  ·  3 not applicable  ·  13 not implemented
+
+  RISK  X-FLAVOR-01  Play Billing SDK found in this bundle — leaking into amazon build
+         at: base/manifest/AndroidManifest.xml
+      found: 'com.android.vending.BILLING' in manifest; 'com/android/billingclient' classes in dex
+   expected: no Play Billing in amazon bundle
+        fix: [manual] Scope the Play Billing dependency with googleImplementation (or inside the google { } flavor block) so it is excluded from the amazon build variant.
+

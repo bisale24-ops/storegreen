@@ -1,0 +1,30 @@
+StoreGreen v0.1.0  modules: app  form_factor: phone  0.005s
+✗ 1 BLOCK  0 RISK  0 WARN  3 undecidable  3 passed
+21 rules  ·  8 implemented  ·  4 decided  ·  3 undecidable  ·  2 not applicable  ·  13 not implemented
+
+  BLOCK  AMZ-IAP-06  R8 keep rules incomplete — missing: -keep class com.amazon.** { *; }, -dontwarn com.amazon.**, -keepattributes *Annotation*
+         at: app/proguard-rules.pro:1
+      found: missing: -keep class com.amazon.** { *; }; -dontwarn com.amazon.**; -keepattributes *Annotation*
+   expected: -keep class com.amazon.** { *; }  -dontwarn com.amazon.**  -keepattributes *Annotation*
+        fix: [manual] Add to your proguard-rules.pro:
+-keep class com.amazon.** { *; }
+-dontwarn com.amazon.**
+-keepattributes *Annotation*
+       from: source
+
+── UNDECIDED (3) ──
+  AMZ-IAP-01 · AppstoreAuthenticationKey.pem not found in source tree — the key is a secret and does not belong in a public repository; verify it is injected at build time before uploading
+    gave up at app/build.gradle:1
+  AMZ-IAP-04 · com.amazon.venezia not found in source manifests — a dependency AAR may still contribute it; re-run with --aab
+    gave up at app/src/main/AndroidManifest.xml:1
+  AMZ-IAP-03 · com.amazon.device.iap.ResponseReceiver not found in source manifests — a dependency AAR may still contribute it; re-run with --aab
+    gave up at app/src/main/AndroidManifest.xml:1
+
+── PASSED (3) ──
+  GP-API-01, X-FLAVOR-01, SMOKE-01
+
+── NOT APPLICABLE (2) ──
+  GP-BILL-01, GP-16KB-01
+
+── NOT IMPLEMENTED (13) ──
+  AMZ-IAP-02, AMZ-IAP-05, AMZ-IAP-07, AMZ-IAP-08, GP-API-02, GP-BILL-02, GP-PERM-01, GP-PERM-02, GP-PRIV-01, GP-DS-01, GP-EXP-01, X-SIGN-01, X-VER-01

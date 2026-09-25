@@ -1,0 +1,20 @@
+── explain-rejection ──  source: /tmp/demo/amazon-email.txt
+
+SYMPTOM  App rejected / not published
+  quote:    We have not published your recent submission, CrewSheet: Crew Timesheet version 1.0.0 in any
+  violated here:  AMZ-IAP-01  AMZ-IAP-03  AMZ-IAP-04
+  clean here:     AMZ-IAP-06
+
+SYMPTOM  IAP / purchase displays error at runtime
+  quote:    Issue Description: "(Note: IAP displays error)
+  violated here:  AMZ-IAP-01  AMZ-IAP-03  AMZ-IAP-04
+  clean here:     AMZ-IAP-06
+
+SYMPTOM  PurchasingService / SDK reference in rejection
+  quote:    Learn more about Purchasing Service —
+  violated here:  AMZ-IAP-03  AMZ-IAP-04
+  clean here:     AMZ-IAP-06
+
+── 19 sentence(s) map to no rule ──
+  Amazon Appstore — App submission for CrewSheet: Crew Timesheet requires your attention
+  From: no-reply-appdev@appstore.amazon.com
