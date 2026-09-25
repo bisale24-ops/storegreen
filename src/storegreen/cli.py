@@ -77,6 +77,10 @@ def _render_text(report, use_colour: bool) -> str:
     warn  = summary["warn"]
     unk   = summary["undecidable"]
     pas   = summary["passed"]
+    decided = summary.get("decided", pas)
+    na    = summary.get("not_applicable", 0)
+    ni    = summary.get("not_implemented", 0)
+    total_rules = 21  # spec §11: 21 rules total
 
     verdict = (
         _colour("✓ no BLOCKs", _C.GREEN, use_colour)
@@ -89,6 +93,15 @@ def _render_text(report, use_colour: bool) -> str:
         + _colour(f"{warn} WARN", _C.BLUE, use_colour) + "  "
         + _colour(f"{unk} undecidable", _C.GREY, use_colour) + "  "
         + _colour(f"{pas} passed", _C.GREEN, use_colour)
+    )
+    # Decidability counters (spec §11)
+    lines.append(
+        _colour(
+            f"{total_rules} rules  ·  8 implemented  ·  "
+            f"{decided} decided  ·  {unk} undecidable  ·  "
+            f"{na} not applicable  ·  {ni} not implemented",
+            _C.GREY, use_colour,
+        )
     )
     lines.append("")
 

@@ -28,6 +28,11 @@ from storegreen.rules.base import (
     Undecided,
 )
 from storegreen.rules.smoke import SmokeRule
+from storegreen.rules.amz_iap import AmzIap01, AmzIap03, AmzIap04, AmzIap06
+from storegreen.rules.gp_api import GpApi01
+from storegreen.rules.gp_bill import GpBill01
+from storegreen.rules.gp_16kb import GpSixteenKb01
+from storegreen.rules.x_flavor import XFlavor01
 from storegreen.source import project_layout as pl_mod
 from storegreen.bundle.aab_reader import AabReader
 
@@ -38,6 +43,37 @@ from storegreen.bundle.aab_reader import AabReader
 
 ALL_RULES: List[Rule] = [
     SmokeRule(),
+    # Tier 1: Amazon IAP
+    AmzIap01(),
+    AmzIap03(),
+    AmzIap04(),
+    AmzIap06(),
+    # Tier 1: Google Play
+    GpApi01(),
+    GpBill01(),
+    GpSixteenKb01(),
+    # Tier 1: Cross-store
+    XFlavor01(),
+]
+
+# ---------------------------------------------------------------------------
+# Tier-2 rules that are not implemented yet (listed in every report)
+# ---------------------------------------------------------------------------
+
+NOT_IMPLEMENTED_IDS: List[str] = [
+    "AMZ-IAP-02",
+    "AMZ-IAP-05",
+    "AMZ-IAP-07",
+    "AMZ-IAP-08",
+    "GP-API-02",
+    "GP-BILL-02",
+    "GP-PERM-01",
+    "GP-PERM-02",
+    "GP-PRIV-01",
+    "GP-DS-01",
+    "GP-EXP-01",
+    "X-SIGN-01",
+    "X-VER-01",
 ]
 
 
@@ -65,10 +101,13 @@ class ScanReport:
         block = sum(1 for f in self.findings if f.severity == "BLOCK")
         risk  = sum(1 for f in self.findings if f.severity == "RISK")
         warn  = sum(1 for f in self.findings if f.severity == "WARN")
+        # "decided" = Finding + Passed (rule ran and reached a verdict)
+        decided = len(self.findings) + len(self.passed)
         return {
             "block": block,
             "risk": risk,
             "warn": warn,
+            "decided": decided,
             "undecidable": len(self.undecided),
             "passed": len(self.passed),
             "not_applicable": len(self.not_applicable),
@@ -204,6 +243,9 @@ class Runner:
 
             # Both ran: prefer Finding > Undecided > Passed > NotApplicable
             _add_merged(report, src, bnd)  # type: ignore
+
+        # Populate not_implemented with tier-2 rule ids
+        report.not_implemented = list(NOT_IMPLEMENTED_IDS)
 
         report.elapsed_seconds = time.monotonic() - t0
         return report
