@@ -1,0 +1,37 @@
+Amazon Appstore — App submission for CrewSheet: Crew Timesheet requires your attention
+From: no-reply-appdev@appstore.amazon.com
+Date: 11 September 2026, 18:42 UTC
+App: CrewSheet: Crew Timesheet, version 1.0.0 (com.khlab.crewsheet.amazon)
+
+Dear KHLab
+
+We have not published your recent submission, CrewSheet: Crew Timesheet version 1.0.0 in any
+territories, as it has failed due to content policy violation during our review process. We
+leveraged a combination of automated means and expert human review to identify this issue and make
+this decision. You will be unable to publish your app until you take the remedial steps outlined
+below and re-submit it for publication.
+
+Primary Validation: PASS
+Content Policy Validation: FAILED
+
+  Issue Description: "(Note: IAP displays error)
+
+  IAP displays error
+
+  Steps to Reproduce:
+
+  1. Install and launch the app.
+  2. click on "Buy full version"
+  3. Observe the issue.
+
+  Actual result: App displays an error message while purchasing the IAP item.
+  Expected Result: User should be able to purchase IAP successfully."
+
+  Next Steps: Please refer to the attached screenshots for further details and resubmit for review.
+  Learn more about Purchasing Service —
+  https://developer.amazon.com/docs/in-app-purchasing/iap-implement-iap.html#purchasingservice
+
+Functionality Validation: PASS
+
+Sincerely,
+Amazon Appstore Team
