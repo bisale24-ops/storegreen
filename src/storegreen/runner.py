@@ -29,7 +29,7 @@ from storegreen.rules.base import (
 )
 from storegreen.rules.smoke import SmokeRule
 from storegreen.rules.amz_iap import AmzIap01, AmzIap03, AmzIap04, AmzIap06
-from storegreen.rules.gp_api import GpApi01
+from storegreen.rules.gp_api import GpApi01, detect_form_factors_for_manifest
 from storegreen.rules.gp_bill import GpBill01
 from storegreen.rules.gp_16kb import GpSixteenKb01
 from storegreen.rules.x_flavor import XFlavor01
@@ -177,6 +177,15 @@ class Runner:
                 modules=modules,
                 _layout=layout,
             )
+            # Detect form factors per module from each module's own manifest so
+            # that in a multi-module project (e.g. watch + companion phone) the
+            # header reflects the actual form factors present in the repo.
+            seen_ff: set = set()
+            for mod in layout.modules:
+                for ff_name, _ in detect_form_factors_for_manifest(mod.main_manifest):
+                    if ff_name not in seen_ff:
+                        form_factors.append(ff_name)
+                        seen_ff.add(ff_name)
 
         if aab_path:
             aab_path = os.path.abspath(aab_path)

@@ -334,6 +334,68 @@ class TestFormFactor:
             api_findings = [f for f in report.findings if f.rule == "GP-API-01"]
             assert not api_findings, "Automotive with targetSdk=35 must NOT fire GP-API-01"
 
+    def test_wear_os_34_blocks(self):
+        """targetSdk 34 must BLOCK for a Wear OS module — watch requires 35."""
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = _make_dir(tmp, "app")
+            _make_dir(mod, "src", "main")
+            _write(os.path.join(mod, "src", "main", "AndroidManifest.xml"), textwrap.dedent("""\
+                <?xml version="1.0" encoding="utf-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+                    package="com.example.wear">
+                    <uses-sdk android:targetSdkVersion="34" />
+                    <uses-feature android:name="android.hardware.type.watch" />
+                    <application android:label="WearApp" />
+                </manifest>
+            """))
+            _write(os.path.join(mod, "build.gradle"), _build_gradle(target_sdk=34))
+            report = _run(repo=tmp)
+            api_findings = [f for f in report.findings if f.rule == "GP-API-01"]
+            assert api_findings, "Wear OS with targetSdk=34 must fire GP-API-01 (requires 35)"
+            assert "wear" in api_findings[0].title.lower(), \
+                "finding title must mention form factor 'wear'"
+
+    def test_leanback_34_passes(self):
+        """targetSdk 34 must PASS for a leanback (Android TV) module — TV requires 34."""
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = _make_dir(tmp, "app")
+            _make_dir(mod, "src", "main")
+            _write(os.path.join(mod, "src", "main", "AndroidManifest.xml"), textwrap.dedent("""\
+                <?xml version="1.0" encoding="utf-8"?>
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+                    package="com.example.tv">
+                    <uses-sdk android:targetSdkVersion="34" />
+                    <uses-feature android:name="android.software.leanback" />
+                    <application android:label="TvApp" />
+                </manifest>
+            """))
+            _write(os.path.join(mod, "build.gradle"), _build_gradle(target_sdk=34))
+            report = _run(repo=tmp)
+            api_findings = [f for f in report.findings if f.rule == "GP-API-01"]
+            assert not api_findings, "Leanback/TV with targetSdk=34 must NOT fire GP-API-01"
+            api_passed = [p for p in report.passed if p.rule == "GP-API-01"]
+            assert api_passed, "Leanback/TV with targetSdk=34 must PASS GP-API-01"
+            assert "tv" in api_passed[0].note.lower(), "pass note must mention form factor 'tv'"
+
+    def test_phone_assumed_36_passes(self):
+        """No form-factor feature → assumes phone (36 required); evidence says 'assumed'."""
+        with tempfile.TemporaryDirectory() as tmp:
+            mod = _make_dir(tmp, "app")
+            _make_dir(mod, "src", "main")
+            _write(os.path.join(mod, "src", "main", "AndroidManifest.xml"), _manifest(36))
+            _write(os.path.join(mod, "build.gradle"), _build_gradle(target_sdk=36))
+            report = _run(repo=tmp)
+            api_findings = [f for f in report.findings if f.rule == "GP-API-01"]
+            assert not api_findings, "Phone (assumed) with targetSdk=36 must NOT fire GP-API-01"
+            api_passed = [p for p in report.passed if p.rule == "GP-API-01"]
+            assert api_passed, "Phone (assumed) with targetSdk=36 must PASS GP-API-01"
+            assert "phone" in api_passed[0].note.lower(), "pass note must mention 'phone'"
+            assert "assumed" in api_passed[0].note.lower(), \
+                "pass note must say 'assumed' when no form-factor feature found"
+            # Report-level form_factors must also reflect phone
+            assert "phone" in report.form_factors, \
+                "ScanReport.form_factors must include 'phone' for a plain phone module"
+
     def test_phone_36_passes(self):
         """targetSdk 36 must PASS for a phone app; evidence says 'phone'."""
         with tempfile.TemporaryDirectory() as tmp:

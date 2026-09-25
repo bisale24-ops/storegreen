@@ -114,6 +114,22 @@ def _detect_form_factors(merged: manifest_merger.MergedManifest) -> List[Tuple[s
     return detected
 
 
+def detect_form_factors_for_manifest(main_manifest_path: Optional[str]) -> List[Tuple[str, int]]:
+    """Public helper: detect form factors from a module's main manifest path.
+
+    Returns the same list as _detect_form_factors, including the
+    [("phone", 36)] default when no form-factor feature is present.
+    Used by the runner to populate per-module form factors in the report.
+    """
+    if not main_manifest_path:
+        return [("phone", _PHONE_REQUIRED)]
+    merged = manifest_merger.merge(
+        module_name="",
+        main_manifest_path=main_manifest_path,
+    )
+    return _detect_form_factors(merged)
+
+
 # ---------------------------------------------------------------------------
 # GP-API-01
 # ---------------------------------------------------------------------------
@@ -199,7 +215,10 @@ class GpApi01(Rule):
                 source_file = target_sdk_resolved.source_file
                 source_line = target_sdk_resolved.source_line
 
-            # Detect form factor from manifest
+            # Detect form factor per module from that module's own merged manifest.
+            # Default to phone when no form-factor feature is present so that a
+            # multi-module project (e.g. watch + companion phone) never has the
+            # watch module's feature bleed into the phone module's evaluation.
             form_factors: List[Tuple[str, int]] = [("phone", _PHONE_REQUIRED)]
             if mod.main_manifest:
                 merged = manifest_merger.merge(
@@ -211,6 +230,9 @@ class GpApi01(Rule):
             # Take the lowest required SDK across all detected form factors
             deciding_ff, required_sdk = min(form_factors, key=lambda x: x[1])
             ff_names = [f for f, _ in form_factors]
+            # When the form factor could not be detected, make that explicit.
+            ff_assumed = (ff_names == ["phone"])
+            ff_label = f"phone (assumed — no form-factor feature found)" if ff_assumed else deciding_ff
 
             rel_source = os.path.relpath(source_file, ctx.repo_root)
 
@@ -219,14 +241,14 @@ class GpApi01(Rule):
                     rule=self.id,
                     note=(
                         f"targetSdk {target_sdk_int} ≥ {required_sdk} "
-                        f"(required for form factor: {deciding_ff})"
+                        f"(form factor: {ff_label})"
                     ),
                     decided_from="source",
                     evidence=Evidence(
                         file=rel_source,
                         line=source_line,
                         found=f"targetSdk = {target_sdk_int}",
-                        expected=f"≥ {required_sdk} for {deciding_ff}",
+                        expected=f"≥ {required_sdk} for {ff_label}",
                     ),
                 )
 
@@ -236,7 +258,7 @@ class GpApi01(Rule):
                 severity="BLOCK",
                 title=(
                     f"targetSdk {target_sdk_int} is below the required level "
-                    f"{required_sdk} for {deciding_ff} (deadline 31.08.2026, "
+                    f"{required_sdk} for {ff_label} (deadline 31.08.2026, "
                     "extension to 01.11.2026)"
                 ),
                 evidence=Evidence(
@@ -244,7 +266,7 @@ class GpApi01(Rule):
                     line=source_line,
                     found=f"targetSdk = {target_sdk_int}",
                     expected=(
-                        f"≥ {required_sdk} for {deciding_ff}; "
+                        f"≥ {required_sdk} for {ff_label}; "
                         f"detected form factors: {', '.join(ff_names)}"
                     ),
                 ),
