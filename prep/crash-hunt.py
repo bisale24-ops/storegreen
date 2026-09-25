@@ -49,6 +49,8 @@ def main(argv=None):
     parser.add_argument("--corpus", default="/tmp/storegreen-corpus")
     parser.add_argument("--timeout", type=float, default=60)
     parser.add_argument("--html", action="store_true", help="also exercise the HTML writer")
+    parser.add_argument("--limit", type=int, default=0,
+                        help="only the first N inputs — for a fast self-test, never for acceptance")
     parser.add_argument("command", nargs=argparse.REMAINDER,
                         help="the tool, e.g. ./run.sh  (put it after --)")
     args = parser.parse_args(argv)
@@ -67,6 +69,8 @@ def main(argv=None):
         html_dir = corpus / "_html"
         html_dir.mkdir(exist_ok=True)
 
+    if args.limit:
+        cases = cases[:args.limit]
     bad, checked, slowest = [], 0, (0.0, "")
     for repo in cases:
         if repo.name.startswith("_"):

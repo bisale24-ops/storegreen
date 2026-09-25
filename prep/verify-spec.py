@@ -184,7 +184,7 @@ for label, body in stubs.items():
     written[label] = path
 for label, expected in (("crashes", 1), ("hangs", 1), ("noisy", 1), ("clean", 0)):
     done = subprocess.run([sys.executable, str(PREP / "crash-hunt.py"), "--corpus", str(corpus),
-                           "--timeout", "3", "--", sys.executable, str(written[label])],
+                           "--timeout", "3", "--limit", "4", "--", sys.executable, str(written[label])],
                           capture_output=True, text=True)
     check("the crash hunter returns %d for a tool that %s" % (expected, label),
           done.returncode == expected, "got %s: %s" % (done.returncode, done.stdout[-200:]))
@@ -225,16 +225,24 @@ check("the empty directory is the case that catches a lying tool",
       "indistinguishable from one that works" in expect_doc)
 check("the counters are pinned per case, not left to the implementation",
       "The four counters, per case" in expect_doc)
-check("the video's strongest scene carries the number",
-      "each refusal naming the line it gave up on" in
-      (pathlib.Path(__file__).resolve().parents[1] / "submission" / "video-script.md").read_text())
+script_paths = [pathlib.Path(__file__).resolve().parents[1] / "submission" / "video-script.md",
+                pathlib.Path.home() / "Desktop/KHLab/ibm-bob-hackathon/submission/video-script.md"]
+script = next((p for p in script_paths if p.exists()), None)
+if script is None:
+    skip("the video's strongest scene carries the number", "video-script.md not found")
+else:
+    check("the video's strongest scene carries the number",
+          "each refusal naming the line it gave up on" in script.read_text())
 
 # ---- the Play deadlines, which are the whole B family ----------------------------------------
 
 check("billing: v9 is dated 2027, not 2028",
       "31.08.2027" in catalog and "v9 becomes mandatory **31.08.2027**" in catalog)
-check("no rule still claims v9 arrives in 2028",
-      "v9 becomes mandatory 31.08.2028" not in catalog)
+# The first version of this check looked for one exact sentence and missed the same claim written
+# another way, three lines further down. Bob's plan-mode review caught what the test did not.
+stale = [line.strip() for line in catalog.splitlines()
+         if re.search(r"\bv?9\b", line) and "2028" in line and "v10" not in line]
+check("no line anywhere still dates v9 to 2028", not stale, "still says: %s" % stale[:2])
 for feature in ("android.hardware.type.watch", "android.software.leanback",
                 "android.hardware.type.automotive"):
     check("the form-factor table detects %s" % feature, feature in catalog)

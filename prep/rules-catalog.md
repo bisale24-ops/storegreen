@@ -16,7 +16,7 @@ Tested on an emulator and a Galaxy phone without the Appstore, where a failed pu
 
 | ID | Sev | Fails when | Detect | Fix |
 |----|-----|-----------|--------|-----|
-| AMZ-IAP-01 | BLOCK | `AppstoreAuthenticationKey.pem` missing from the amazon build | file absent in `src/<amazonFlavor>/assets/` and in AAB `base/assets/` | download the app's own public key: Console → app → Upload Your App File → Additional information → View public key |
+| AMZ-IAP-01 | BLOCK **in bundle mode only** | `AppstoreAuthenticationKey.pem` missing from the shipped bundle | AAB `base/assets/`. In a source tree its absence is RISK with the reason "the key is a secret and does not belong in a public repository" — see section 7, and never a BLOCK | download the app's own public key: Console → app → Upload Your App File → Additional information → View public key |
 | AMZ-IAP-02 | BLOCK | the key belongs to a different app | fingerprint of the .pem equals another app's key in the same workspace | each app has its own key; never copy between apps |
 | AMZ-IAP-03 | BLOCK | no `com.amazon.device.iap.ResponseReceiver` in merged manifest | receiver absent, or not `exported="true"`, or missing `permission="com.amazon.inapp.purchasing.Permission.NOTIFY"`, or no intent-filter `com.amazon.inapp.purchasing.NOTIFY` | add the receiver block; a `PurchasingService` service does not replace it |
 | AMZ-IAP-04 | BLOCK | `<queries>` lacks `com.amazon.venezia` (and `com.amazon.sdktestclient`) with targetSdk ≥ 30 | parse merged manifest | add both `<package>` entries |
@@ -63,7 +63,8 @@ Sources for B (fetched 22.09.2026):
 - targetSdk: support.google.com/googleplay/android-developer/answer/11926878 — API 36 for new apps and updates from
   31.08.2026, extension to 01.11.2026; existing apps below API 35 stop reaching new users on newer devices.
 - Billing: developer.android.com/google/play/billing/deprecation-faq — v8+ from 31.08.2026, extension to 01.11.2026;
-  v9 from 31.08.2028, extension to 01.11.2028.
+  v9 from **31.08.2027**, extension to 01.11.2027 (each version expires two years after the one before,
+  with a three-month extension; corrected 25.09.2026 and again confirmed by Bob's review of this file).
 - 16 KB: developer.android.com/guide/practices/page-sizes — from 01.02.2027 non-compliant updates cannot be released.
 
 **Timing hook for the pitch:** every app that took the Play extension has until **01.11.2026** — about five weeks after
@@ -73,7 +74,9 @@ the hackathon. That is the "why now" for business value.
 
 - **Source tree by default, built AAB as the second step.** Source mode is instant on stage and covers every rule
   except the ones that need the binary; AAB mode (AMZ-IAP-01 in `base/assets/`, GP-16KB-01 ELF alignment,
-  X-SIGN-01) is the "and it also reads what you actually ship" moment in the video.
+  AMZ-IAP-03/04 by string presence, X-FLAVOR-01 by dex) is the "and it also reads what you actually
+  ship" moment in the video. **X-SIGN-01 is not part of it** — section 1 drops it from bundle mode,
+  and this line used to contradict that.
 - GP-16KB-01 date: the developer.android.com page above is the single source; the conflicting older dates are dropped.
 
 ---
@@ -307,3 +310,34 @@ Two things follow, and both go in the video:
 The strongest single frame in the demo is the one where the tool says nothing at all about a Wear OS
 app at target thirty-five, about a Play-scoped billing dependency in a Play flavor, and about an
 Amazon key that is correctly absent from a public repository — and says why for each.
+
+
+---
+
+# 12. Answers to what Bob asked, 25.09.2026 21:15
+
+Bob's plan-mode review found three contradictions I had introduced and seven genuine gaps. The
+contradictions are fixed above. These are the rulings on the gaps, so nothing is decided twice:
+
+1. **Which module does an `--aab` belong to?** Match the bundle's application id from its protobuf
+   manifest against the `applicationId` of each source module. No match, or more than one: report
+   the bundle findings on their own and say the module could not be matched. Bob's proposal, taken.
+2. **`X-VER-01` without `--last-version`** is `not applicable`, not undecidable — the precondition is
+   missing, not the evidence. The note says how to enable it. Bob's proposal, taken.
+3. **`--fix` output**: the JSON gains `"fix_applied": true` and `"findings_before_fix"`, with
+   `"findings"` holding the state after. The page renders the two side by side. Bob's proposal, taken.
+4. **`--explain-rejection F`**: `F` is a **plain-text file** — the body of a store e-mail, pasted. The
+   output is a list of `{quote, rule, evidence, fix}`, one per sentence that maps to a rule, plus a
+   list of sentences that map to nothing, shown as such. It never invents a mapping. The fixture is
+   `prep/fixtures/amazon-rejection-crewsheet.txt`.
+5. **`form_factor` becomes an array** in `scanned`, and the GP-API-01 finding names the specific form
+   factor that produced its verdict. Bob is right that a module can be more than one.
+6. — fixed above.
+7. — fixed above.
+8. — fixed above.
+9. **`GP-PRIV-01`** goes to tier two with a written assumption: store metadata means a Fastlane
+   `fastlane/metadata/android/**/full_description.txt` tree or a `store/` directory at the repo root.
+   If neither exists the rule is `not applicable`, not a finding.
+10. **`Passed` carries an optional `evidence`**, and it is required for any rule that made a binary
+    check — the PEM fingerprint is exactly the case where a pass needs to be auditable. Bob is right
+    that the spec contradicted itself here.
