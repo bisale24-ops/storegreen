@@ -91,7 +91,7 @@ def to_dict(report: ScanReport, version: str = "0.1.0") -> Dict[str, Any]:
         "form_factors": report.form_factors,
     }
 
-    return {
+    d: Dict[str, Any] = {
         "tool": "storegreen",
         "version": version,
         "scanned": scanned,
@@ -102,3 +102,10 @@ def to_dict(report: ScanReport, version: str = "0.1.0") -> Dict[str, Any]:
         "not_applicable": [_not_applicable_dict(n) for n in report.not_applicable],
         "not_implemented": list(report.not_implemented),
     }
+
+    # §12 --fix fields: present only when a fix was applied
+    if report.fix_applied:
+        d["fix_applied"] = True
+        d["findings_before_fix"] = [_finding_dict(f) for f in report.findings_before_fix]
+
+    return d

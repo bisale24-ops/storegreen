@@ -96,6 +96,10 @@ class ScanReport:
     not_applicable: List[NotApplicable] = field(default_factory=list)
     not_implemented: List[str] = field(default_factory=list)  # rule ids
 
+    # --fix fields (§12): populated by cli.py after applying repairs
+    fix_applied: bool = False
+    findings_before_fix: List[Finding] = field(default_factory=list)
+
     @property
     def summary(self) -> Dict[str, int]:
         block = sum(1 for f in self.findings if f.severity == "BLOCK")

@@ -24,6 +24,8 @@ from storegreen import __version__
 from storegreen.runner import Runner
 from storegreen.report.json_report import to_json
 from storegreen.report.html_report import to_html
+from storegreen.fixer import apply_fixes
+from storegreen.explainer import explain, ExplainResult
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +160,69 @@ def _render_text(report, use_colour: bool) -> str:
 
 
 # ---------------------------------------------------------------------------
+# --explain-rejection renderer
+# ---------------------------------------------------------------------------
+
+def _render_explain(result: ExplainResult, use_colour: bool) -> str:
+    lines: List[str] = []
+    lines.append(
+        _colour("── explain-rejection ──", _C.BOLD, use_colour)
+        + f"  source: {result.email_file}"
+    )
+    lines.append("")
+
+    if result.matched_symptoms:
+        for mapping in result.matched_symptoms:
+            lines.append(
+                _colour(f"SYMPTOM  {mapping.symptom_label}", _C.BOLD, use_colour)
+            )
+            lines.append(
+                _colour("  quote:    ", _C.GREY, use_colour)
+                + mapping.sentence[:120]
+            )
+            if mapping.violated:
+                rules_str = "  ".join(
+                    _colour(r, _C.RED + _C.BOLD, use_colour) for r in mapping.violated
+                )
+                lines.append(
+                    _colour("  violated here:  ", _C.RED + _C.BOLD, use_colour) + rules_str
+                )
+            if mapping.undecided:
+                rules_str = "  ".join(
+                    _colour(r, _C.GREY, use_colour) for r in mapping.undecided
+                )
+                lines.append(
+                    _colour("  undecided here: ", _C.GREY, use_colour) + rules_str
+                    + _colour("  (re-run with --aab for full check)", _C.GREY, use_colour)
+                )
+            if mapping.clean:
+                rules_str = "  ".join(
+                    _colour(r, _C.GREEN, use_colour) for r in mapping.clean
+                )
+                lines.append(
+                    _colour("  clean here:     ", _C.GREEN, use_colour) + rules_str
+                )
+            lines.append("")
+
+    if result.unmapped_sentences:
+        lines.append(_colour(
+            f"── {len(result.unmapped_sentences)} sentence(s) map to no rule ──",
+            _C.GREY, use_colour,
+        ))
+        for s in result.unmapped_sentences:
+            lines.append(_colour(f"  {s[:100]}", _C.GREY, use_colour))
+        lines.append("")
+
+    if not result.matched_symptoms:
+        lines.append(_colour(
+            "No sentences in the e-mail mapped to any known symptom.",
+            _C.GREY, use_colour,
+        ))
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
 
@@ -226,10 +291,25 @@ def main(argv: Optional[List[str]] = None) -> int:
             return 2
 
     # ------------------------------------------------------------------
-    # Run
+    # Run (initial scan)
     # ------------------------------------------------------------------
     runner = Runner(only=args.only)
     report = runner.scan(repo_root=repo_root, aab_path=aab_path)
+
+    # ------------------------------------------------------------------
+    # --fix: apply deterministic repairs, re-scan, attach before/after
+    # ------------------------------------------------------------------
+    fix_diff: str = ""
+    if args.fix and repo_root:
+        findings_before = list(report.findings)
+        fix_diff, applied = apply_fixes(report, repo_root)
+
+        if applied:
+            # Re-scan so findings reflect the repaired files
+            report_after = runner.scan(repo_root=repo_root, aab_path=aab_path)
+            report_after.fix_applied = True
+            report_after.findings_before_fix = findings_before
+            report = report_after
 
     # ------------------------------------------------------------------
     # Output
@@ -249,9 +329,67 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(to_json(report))
         return 1 if report.has_block else 0
 
+    # ------------------------------------------------------------------
+    # --explain-rejection (runs after the scan so it can intersect results)
+    # ------------------------------------------------------------------
+    if args.explain_rejection:
+        email_path = os.path.abspath(args.explain_rejection)
+        if not os.path.isfile(email_path):
+            msg = f"storegreen: error: rejection e-mail not found: {email_path}"
+            if not args.json_output:
+                print(msg, file=sys.stderr)
+            return 2
+        try:
+            explain_result = explain(email_path, report)
+        except ValueError as exc:
+            if not args.json_output:
+                print(f"storegreen: error: {exc}", file=sys.stderr)
+            return 2
+
+        if args.json_output:
+            import json as _json
+            out = {
+                "explain_rejection": {
+                    "email_file": explain_result.email_file,
+                    "matched_symptoms": [
+                        {
+                            "symptom": m.symptom_label,
+                            "quote": m.sentence,
+                            "violated": m.violated,
+                            "undecided": m.undecided,
+                            "clean": m.clean,
+                        }
+                        for m in explain_result.matched_symptoms
+                    ],
+                    "unmapped_sentences": explain_result.unmapped_sentences,
+                }
+            }
+            print(_json.dumps(out, indent=2, ensure_ascii=False))
+            return 1 if report.has_block else 0
+
+        if not args.quiet:
+            use_colour = _use_colour(args.no_colour)
+            print(_render_explain(explain_result, use_colour))
+        return 1 if report.has_block else 0
+
     if not args.quiet:
         use_colour = _use_colour(args.no_colour)
+        # Show the unified diff first when --fix was applied
+        if fix_diff:
+            print(_colour("── diff (applied by --fix) ──", _C.GREY, use_colour))
+            print(fix_diff)
         print(_render_text(report, use_colour))
+        # Show before/after finding counts when --fix was applied
+        if report.fix_applied:
+            before_block = sum(1 for f in report.findings_before_fix if f.severity == "BLOCK")
+            after_block  = sum(1 for f in report.findings if f.severity == "BLOCK")
+            before_risk  = sum(1 for f in report.findings_before_fix if f.severity == "RISK")
+            after_risk   = sum(1 for f in report.findings if f.severity == "RISK")
+            print(_colour(
+                f"── before fix: {before_block} BLOCK  {before_risk} RISK  "
+                f"·  after fix: {after_block} BLOCK  {after_risk} RISK ──",
+                _C.GREY, use_colour,
+            ))
 
     return 1 if report.has_block else 0
 
