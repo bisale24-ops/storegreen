@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.example.tipjar'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.tipjar"
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+    }
+
+    // Two flavors: amazon (Appstore) and play (Google Play)
+    flavorDimensions "store"
+    productFlavors {
+        amazon {
+            dimension "store"
+        }
+        play {
+            dimension "store"
+        }
+    }
+
+    buildTypes {
+        release {
+            // DEFECT AMZ-IAP-06: minification is on …
+            isMinifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            isMinifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    // Amazon Appstore IAP SDK (both flavors use it; the amazon flavor uses it live)
+    amazonImplementation 'com.amazon.device:amazon-appstore-sdk:3.0.7'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+}

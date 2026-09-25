@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    TipJar main manifest.
+
+    Seeded defects (source-mode):
+      AMZ-IAP-03: ResponseReceiver absent. A PurchasingService service is present
+                  but that is not a substitute for the receiver.
+      AMZ-IAP-04: <queries> block is absent. targetSdk 36 >= 30 requires
+                  com.amazon.venezia and com.amazon.sdktestclient to be listed.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.tipjar">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TipJar">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- AMZ-IAP-03 defect: PurchasingService service is present but
+             com.amazon.device.iap.ResponseReceiver is NOT declared here. -->
+        <service android:name="com.amazon.device.iap.PurchasingService"
+            android:exported="false" />
+
+    </application>
+
+    <!-- AMZ-IAP-04 defect: no <queries> block at all. -->
+
+</manifest>

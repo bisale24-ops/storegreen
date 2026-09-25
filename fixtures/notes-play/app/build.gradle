@@ -1,0 +1,54 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.example.notes'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.notes"
+        minSdk 21
+        // DEFECT GP-API-01: targetSdk 35 is below the required 36 for phone/tablet
+        // (deadline 31.08.2026, extension to 01.11.2026)
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+
+    // Two store flavors — both present so X-FLAVOR-01 can fire
+    flavorDimensions "store"
+    productFlavors {
+        amazon {
+            dimension "store"
+        }
+        play {
+            dimension "store"
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+
+    // DEFECT GP-BILL-01: billing-ktx 7.1.1 < required 8.0.0
+    // DEFECT X-FLAVOR-01: this is plain 'implementation' (not googleImplementation),
+    //   so it leaks into the amazon flavor as well.
+    implementation 'com.android.billingclient:billing-ktx:7.1.1'
+}

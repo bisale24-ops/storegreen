@@ -1,0 +1,4 @@
+// TipJar — demo fixture for storegreen
+// Seeded defects: AMZ-IAP-03, AMZ-IAP-04, AMZ-IAP-06
+rootProject.name = "tipjar-amazon"
+include ':app'

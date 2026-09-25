@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TipJar</string>
+    <string name="sku_pro">tipjar_pro</string>
+    <string name="upgrade_prompt">Unlock TipJar Pro</string>
+</resources>

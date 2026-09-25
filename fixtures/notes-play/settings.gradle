@@ -1,0 +1,4 @@
+// Notes — demo fixture for storegreen
+// Seeded defects: GP-API-01, GP-BILL-01, X-FLAVOR-01
+rootProject.name = "notes-play"
+include ':app'

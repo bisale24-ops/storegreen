@@ -23,7 +23,13 @@ Python 3.9 compatible, standard library only.
 from __future__ import annotations
 
 import os
+import re
 from typing import List, Optional, Tuple
+
+
+def _strip_xml_comments(text: str) -> str:
+    """Remove <!-- … --> XML comment blocks before searching raw manifest text."""
+    return re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
 
 from storegreen.rules.base import (
     BundleContext,
@@ -81,11 +87,13 @@ def _detect_form_factors(merged: manifest_merger.MergedManifest) -> List[Tuple[s
             # Check child text or attributes for action name
             pass
 
-    # Also scan raw manifest files for LEANBACK_LAUNCHER (may be inside activity)
+    # Also scan raw manifest files for LEANBACK_LAUNCHER (may be inside activity).
+    # Strip XML comments first so a commented-out feature declaration is not treated
+    # as a signal — the same class of bug that bit AMZ-IAP-04 and AMZ-IAP-06.
     for source_file in merged.source_files:
         try:
             with open(source_file, "r", encoding="utf-8", errors="replace") as fh:
-                text = fh.read()
+                text = _strip_xml_comments(fh.read())
             if "LEANBACK_LAUNCHER" in text and "tv" not in seen_names:
                 detected.append(("tv", 34))
                 seen_names.add("tv")

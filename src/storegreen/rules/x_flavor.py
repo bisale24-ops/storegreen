@@ -67,11 +67,21 @@ _AMAZON_IAP_DEP_RE = re.compile(
 # ---------------------------------------------------------------------------
 
 def _read_gradle_text(path: str) -> str:
+    """Read a Gradle build file, stripping // and /* */ comments.
+
+    Searching comment-stripped text prevents a commented-out dependency line
+    (e.g. // amazonImplementation "…billing…") from being treated as a live
+    signal — the same class of false-pass that affected AMZ-IAP-04/06.
+    """
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            return fh.read()
+            raw = fh.read()
     except OSError:
         return ""
+    # Block comments first (may span lines), then line comments.
+    raw = re.sub(r'/\*.*?\*/', '', raw, flags=re.DOTALL)
+    raw = re.sub(r'//[^\n]*', '', raw)
+    return raw
 
 
 def _play_billing_in_amazon_scope(mod: pl_mod.ModuleLayout) -> Optional[str]:
@@ -208,19 +218,55 @@ class XFlavor01(Rule):
                     ),
                 )
 
-            # If billing exists but is correctly scoped, stay silent
-            if has_play and _is_play_billing_play_scoped_only(mod):
-                return Passed(
+            # Billing present but not explicitly scoped to play-only → leaks into amazon
+            if not _is_play_billing_play_scoped_only(mod):
+                offending_line = _has_play_billing_dep_globally(mod)
+                rel_file = os.path.relpath(mod.build_gradle, ctx.repo_root)
+                line_no = 1
+                snippet = ""
+                if offending_line:
+                    parts = offending_line.split(":", 2)
+                    if len(parts) >= 2 and parts[1].isdigit():
+                        line_no = int(parts[1])
+                    if len(parts) >= 3:
+                        snippet = parts[2].strip()
+                return Finding(
                     rule=self.id,
-                    note="Play Billing correctly scoped to play flavor; Amazon IAP in amazon flavor",
-                    decided_from="source",
+                    family=self.family,
+                    severity=self.severity,
+                    title=(
+                        "Play Billing SDK declared without flavor scoping — "
+                        "leaks into amazon build variant"
+                    ),
                     evidence=Evidence(
-                        file=os.path.relpath(mod.build_gradle, ctx.repo_root),
-                        line=1,
-                        found="googleImplementation scoping detected",
-                        expected="store-specific billing scoped per flavor",
+                        file=rel_file,
+                        line=line_no,
+                        found=snippet or "Play Billing in unscoped implementation",
+                        expected="Play Billing under googleImplementation only",
+                    ),
+                    decided_from="source",
+                    fix=FixHint(
+                        automatic=False,
+                        description=(
+                            "Change 'implementation' to 'googleImplementation' "
+                            "(or place inside the google { } flavor block) so Play Billing "
+                            "is excluded from the amazon build variant."
+                        ),
                     ),
                 )
+
+            # Billing correctly scoped to play flavor only — stay silent
+            return Passed(
+                rule=self.id,
+                note="Play Billing correctly scoped to play flavor; Amazon IAP in amazon flavor",
+                decided_from="source",
+                evidence=Evidence(
+                    file=os.path.relpath(mod.build_gradle, ctx.repo_root),
+                    line=1,
+                    found="googleImplementation scoping detected",
+                    expected="store-specific billing scoped per flavor",
+                ),
+            )
 
         return NotApplicable(
             rule=self.id,

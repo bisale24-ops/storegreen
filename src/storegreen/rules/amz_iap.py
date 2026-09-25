@@ -20,6 +20,39 @@ import os
 import re
 from typing import List, Optional
 
+
+# ---------------------------------------------------------------------------
+# Comment-stripping helpers
+# ---------------------------------------------------------------------------
+
+def _strip_xml_comments(text: str) -> str:
+    """Remove <!-- … --> XML/HTML comment blocks from *text*.
+
+    Handles multi-line comments.  Does not parse CDATA or processing
+    instructions — sufficient for AndroidManifest.xml strings searches.
+    """
+    return re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
+
+
+def _strip_proguard_comments(text: str) -> str:
+    """Remove # … end-of-line comments from ProGuard / R8 rules text."""
+    # In ProGuard rules files the only comment syntax is # to end-of-line.
+    # Strip each line from the first unquoted # onward.
+    result = []
+    for line in text.splitlines():
+        idx = line.find('#')
+        result.append(line[:idx] if idx != -1 else line)
+    return '\n'.join(result)
+
+
+def _strip_groovy_comments(text: str) -> str:
+    """Remove // line-comments and /* … */ block comments from Groovy/Kotlin DSL text."""
+    # Block comments first (may span lines)
+    text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
+    # Line comments
+    text = re.sub(r'//[^\n]*', '', text)
+    return text
+
 from storegreen.rules.base import (
     BundleContext,
     Evidence,
@@ -377,7 +410,8 @@ class AmzIap04(Rule):
             for mpath in search_files:
                 try:
                     with open(mpath, "r", encoding="utf-8", errors="replace") as fh:
-                        text = fh.read()
+                        raw = fh.read()
+                    text = _strip_xml_comments(raw)
                     if VENEZIA in text:
                         venezia_found = True
                     if SDK_TEST in text:
@@ -546,7 +580,8 @@ class AmzIap06(Rule):
             for pf in proguard_files:
                 try:
                     with open(pf, "r", encoding="utf-8", errors="replace") as fh:
-                        text = fh.read()
+                        raw = fh.read()
+                    text = _strip_proguard_comments(raw)
                     if _KEEP_AMAZON.search(text):
                         keep_ok = True
                         evidence_file = pf
@@ -632,6 +667,9 @@ def _find_proguard_files(mod: pl_mod.ModuleLayout, repo_root: str) -> List[str]:
     except OSError:
         return found
 
+    # Strip Groovy/Kotlin comments before searching for proguard file references,
+    # so a commented-out proguardFiles line does not fool the scanner.
+    text = _strip_groovy_comments(text)
     # proguardFiles getDefaultProguardFile(...), 'proguard-rules.pro'
     # Look for single-quoted or double-quoted file references ending in .pro or .txt
     for m in re.finditer(r'["\']([^"\']+\.(?:pro|txt))["\']', text):
